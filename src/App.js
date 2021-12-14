@@ -1,6 +1,6 @@
 import './App.css';
 import { useEffect, useState } from 'react';
-import { BrowserRouter, NavLink } from 'react-router-dom';
+import { BrowserRouter, NavLink, Switch, Route } from 'react-router-dom';
 
 import CharacterList from './components/Characters/CharacterList';
 import FilmList from './components/Films/FilmList';
@@ -15,7 +15,26 @@ function App() {
   }, []);
 
   const getFilms = async () => {
+    const resp = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/rest/v1/films`, {
+      headers: {
+        apikey: process.env.REACT_APP_SUPABASE_KEY,
+        Authorization: `Bearer ${process.env.REACT_APP_SUPABASE_KEY}`,
+      },
+    });
+    const data = await resp.json();
+
+    const filmArray = data.map((film) => {
+      return [
+        film.title,
+        film.title.replace(/\s+/g, '-').toLowerCase(),
+        film.box_office_total,
+        film.academy_award_nominations,
+      ];
+    });
+
+    setFilms(filmArray);
     // Add your code here!
+    // const
     // 1. Get data using fetch from https://the-one-api.dev/v2/movie/ (don't forget to set your header!)
     // 2. Transform the response so that films contains nested arrays of:
     //   - the film's title
@@ -31,6 +50,20 @@ function App() {
   };
 
   const getCharacters = async () => {
+    const resp = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/rest/v1/characters`, {
+      headers: {
+        apikey: process.env.REACT_APP_SUPABASE_KEY,
+        Authorization: `Bearer ${process.env.REACT_APP_SUPABASE_KEY}`,
+      },
+    });
+
+    const data = await resp.json();
+    const characterArray = data.map((c) => {
+      return { name: c.name, dates: c.birth + ' - ' + c.death };
+    });
+
+    setCharacters(characterArray);
+
     // Add your code here!
     // 1. Get data using fetch from https://the-one-api.dev/v2/character/
     // 2. Update the response data with the key `dates` which is a combination of
@@ -57,7 +90,14 @@ function App() {
             Characters
           </NavLink>
         </header>
-        {/* ADD YOUR ROUTES HERE */}
+        <Switch>
+          <Route path="/films" component={FilmList}>
+            <FilmList films={films} />
+          </Route>
+          <Route>
+            <CharacterList characters={characters} />
+          </Route>
+        </Switch>
       </BrowserRouter>
     </div>
   );
